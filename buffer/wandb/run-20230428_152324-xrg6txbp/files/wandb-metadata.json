@@ -1,0 +1,39 @@
+{
+    "os": "Linux-5.15.0-25-generic-x86_64-with-glibc2.35",
+    "python": "3.9.7",
+    "heartbeatAt": "2023-04-28T15:23:25.283053",
+    "startedAt": "2023-04-28T15:23:24.475049",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 2080 Ti",
+    "gpu_count": 10,
+    "cpu_count": 56,
+    "cuda": null,
+    "args": [
+        "--dataset=MIMIC_small",
+        "--model=ResNet50",
+        "--train_epochs=50",
+        "--num_experts=10",
+        "--buffer_path=/shared/dqwang/scratch/tongchen/FTD_buffer",
+        "--num_experts=10",
+        "--lr_teacher=0.0001",
+        "--batch_train=32",
+        "--decay",
+        "--mom=0.9",
+        "--l2=1e-4",
+        "--save_interval=1",
+        "--rho_max=0.01",
+        "--rho_min=0.01"
+    ],
+    "state": "running",
+    "program": "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/buffer_FTD.py",
+    "codePath": "buffer/buffer_FTD.py",
+    "git": {
+        "remote": "https://github.com/CTDancer/FTD-distillation",
+        "commit": "711532a096326cb9747fd0398b077d18328bf2f3"
+    },
+    "email": null,
+    "root": "/home/dqwang/scratch/tongchen/FTD-distillation",
+    "host": "fish3",
+    "username": "dqwang",
+    "executable": "/home/dqwang/anaconda3/envs/distillation_ct/bin/python"
+}

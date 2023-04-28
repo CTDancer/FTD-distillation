@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/buffer_FTD.py", line 182, in <module>
+    main(args)
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/buffer_FTD.py", line 83, in main
+    teacher_net = get_network(args.model, channel, num_classes, im_size, no_frz=args.no_frz).to(args.device) # get a random model
+AttributeError: 'Namespace' object has no attribute 'no_frz'

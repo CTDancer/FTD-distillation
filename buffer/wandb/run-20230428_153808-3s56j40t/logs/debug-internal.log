@@ -1,0 +1,162 @@
+2023-04-28 15:38:09,192 INFO    MainThread:2129123 [internal.py:wandb_internal():92] W&B internal server running at pid: 2129123, started at: 2023-04-28 15:38:09.192377
+2023-04-28 15:38:09,194 INFO    WriterThread:2129123 [datastore.py:open_for_write():77] open: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/run-3s56j40t.wandb
+2023-04-28 15:38:09,196 DEBUG   SenderThread:2129123 [sender.py:send():235] send: header
+2023-04-28 15:38:09,196 DEBUG   SenderThread:2129123 [sender.py:send():235] send: run
+2023-04-28 15:38:09,385 INFO    SenderThread:2129123 [dir_watcher.py:__init__():169] watching files in: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files
+2023-04-28 15:38:09,385 INFO    SenderThread:2129123 [sender.py:_start_run_threads():812] run started: 3s56j40t with start time 1682696288
+2023-04-28 15:38:09,385 DEBUG   SenderThread:2129123 [sender.py:send():235] send: summary
+2023-04-28 15:38:09,385 INFO    SenderThread:2129123 [sender.py:_save_file():947] saving file wandb-summary.json with policy end
+2023-04-28 15:38:09,393 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: check_version
+2023-04-28 15:38:09,393 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: check_version
+2023-04-28 15:38:09,469 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: run_start
+2023-04-28 15:38:09,503 DEBUG   HandlerThread:2129123 [meta.py:__init__():37] meta init
+2023-04-28 15:38:09,503 DEBUG   HandlerThread:2129123 [meta.py:__init__():51] meta init done
+2023-04-28 15:38:09,503 DEBUG   HandlerThread:2129123 [meta.py:probe():211] probe
+2023-04-28 15:38:09,513 DEBUG   HandlerThread:2129123 [meta.py:_setup_git():201] setup git
+2023-04-28 15:38:09,535 DEBUG   HandlerThread:2129123 [meta.py:_setup_git():208] setup git done
+2023-04-28 15:38:09,535 DEBUG   HandlerThread:2129123 [meta.py:_save_pip():55] save pip
+2023-04-28 15:38:09,536 DEBUG   HandlerThread:2129123 [meta.py:_save_pip():69] save pip done
+2023-04-28 15:38:09,536 DEBUG   HandlerThread:2129123 [meta.py:_save_conda():76] save conda
+2023-04-28 15:38:10,388 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_created():217] file/dir created: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/requirements.txt
+2023-04-28 15:38:10,388 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_created():217] file/dir created: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/conda-environment.yaml
+2023-04-28 15:38:10,389 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_created():217] file/dir created: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-summary.json
+2023-04-28 15:38:12,386 DEBUG   HandlerThread:2129123 [meta.py:_save_conda():86] save conda done
+2023-04-28 15:38:12,386 DEBUG   HandlerThread:2129123 [meta.py:probe():249] probe done
+2023-04-28 15:38:12,389 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/conda-environment.yaml
+2023-04-28 15:38:12,390 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_created():217] file/dir created: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-metadata.json
+2023-04-28 15:38:12,393 DEBUG   SenderThread:2129123 [sender.py:send():235] send: files
+2023-04-28 15:38:12,394 INFO    SenderThread:2129123 [sender.py:_save_file():947] saving file wandb-metadata.json with policy now
+2023-04-28 15:38:12,399 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: stop_status
+2023-04-28 15:38:12,400 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: stop_status
+2023-04-28 15:38:12,508 DEBUG   SenderThread:2129123 [sender.py:send():235] send: telemetry
+2023-04-28 15:38:12,845 INFO    Thread-11 :2129123 [upload_job.py:push():137] Uploaded file /tmp/tmp64fzl8c8wandb/3hpqpr5n-wandb-metadata.json
+2023-04-28 15:38:13,390 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_created():217] file/dir created: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log
+2023-04-28 15:38:15,391 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log
+2023-04-28 15:38:15,789 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: partial_history
+2023-04-28 15:38:17,392 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log
+2023-04-28 15:38:27,510 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: stop_status
+2023-04-28 15:38:27,511 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: stop_status
+2023-04-28 15:38:32,791 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: partial_history
+2023-04-28 15:38:32,792 DEBUG   SenderThread:2129123 [sender.py:send():235] send: telemetry
+2023-04-28 15:38:32,793 DEBUG   SenderThread:2129123 [sender.py:send():235] send: history
+2023-04-28 15:38:32,793 DEBUG   SenderThread:2129123 [sender.py:send():235] send: summary
+2023-04-28 15:38:32,796 INFO    SenderThread:2129123 [sender.py:_save_file():947] saving file wandb-summary.json with policy end
+2023-04-28 15:38:33,401 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-summary.json
+2023-04-28 15:38:34,401 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log
+2023-04-28 15:38:34,951 DEBUG   SenderThread:2129123 [sender.py:send():235] send: exit
+2023-04-28 15:38:34,951 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:34,951 INFO    SenderThread:2129123 [sender.py:send_exit():371] handling exit code: 1
+2023-04-28 15:38:34,952 INFO    SenderThread:2129123 [sender.py:send_exit():373] handling runtime: 25
+2023-04-28 15:38:34,955 INFO    SenderThread:2129123 [sender.py:_save_file():947] saving file wandb-summary.json with policy end
+2023-04-28 15:38:34,956 INFO    SenderThread:2129123 [sender.py:send_exit():379] send defer
+2023-04-28 15:38:34,956 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:34,957 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:34,958 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 0
+2023-04-28 15:38:34,958 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:34,958 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 0
+2023-04-28 15:38:34,958 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 1
+2023-04-28 15:38:34,959 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:34,959 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 1
+2023-04-28 15:38:35,365 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:35,365 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:35,366 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 1
+2023-04-28 15:38:35,367 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 2
+2023-04-28 15:38:35,367 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:35,367 DEBUG   SenderThread:2129123 [sender.py:send():235] send: stats
+2023-04-28 15:38:35,369 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:35,369 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 2
+2023-04-28 15:38:35,369 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:35,369 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 2
+2023-04-28 15:38:35,370 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 3
+2023-04-28 15:38:35,370 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:35,370 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 3
+2023-04-28 15:38:35,371 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:35,371 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 3
+2023-04-28 15:38:35,371 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 4
+2023-04-28 15:38:35,371 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:35,372 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 4
+2023-04-28 15:38:35,372 DEBUG   SenderThread:2129123 [sender.py:send():235] send: summary
+2023-04-28 15:38:35,373 INFO    SenderThread:2129123 [sender.py:_save_file():947] saving file wandb-summary.json with policy end
+2023-04-28 15:38:35,373 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:35,373 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 4
+2023-04-28 15:38:35,373 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 5
+2023-04-28 15:38:35,374 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:35,374 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 5
+2023-04-28 15:38:35,374 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:35,374 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 5
+2023-04-28 15:38:35,402 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log
+2023-04-28 15:38:35,402 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-summary.json
+2023-04-28 15:38:35,470 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:35,524 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 6
+2023-04-28 15:38:35,525 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:35,525 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:35,526 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 6
+2023-04-28 15:38:35,526 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:35,526 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 6
+2023-04-28 15:38:35,526 INFO    SenderThread:2129123 [dir_watcher.py:finish():283] shutting down directory watcher
+2023-04-28 15:38:35,627 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:36,402 INFO    Thread-7  :2129123 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/config.yaml
+2023-04-28 15:38:36,403 INFO    SenderThread:2129123 [dir_watcher.py:finish():313] scan: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files
+2023-04-28 15:38:36,404 INFO    SenderThread:2129123 [dir_watcher.py:finish():327] scan save: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log output.log
+2023-04-28 15:38:36,404 INFO    SenderThread:2129123 [dir_watcher.py:finish():327] scan save: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/config.yaml config.yaml
+2023-04-28 15:38:36,405 INFO    SenderThread:2129123 [dir_watcher.py:finish():327] scan save: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-summary.json wandb-summary.json
+2023-04-28 15:38:36,412 INFO    SenderThread:2129123 [dir_watcher.py:finish():327] scan save: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-metadata.json wandb-metadata.json
+2023-04-28 15:38:36,413 INFO    SenderThread:2129123 [dir_watcher.py:finish():327] scan save: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/requirements.txt requirements.txt
+2023-04-28 15:38:36,413 INFO    SenderThread:2129123 [dir_watcher.py:finish():327] scan save: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/conda-environment.yaml conda-environment.yaml
+2023-04-28 15:38:36,418 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 7
+2023-04-28 15:38:36,419 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:36,425 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:36,425 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 7
+2023-04-28 15:38:36,429 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:36,429 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 7
+2023-04-28 15:38:36,429 INFO    SenderThread:2129123 [file_pusher.py:finish():145] shutting down file pusher
+2023-04-28 15:38:36,525 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:36,536 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:36,644 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:36,644 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:36,746 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:36,746 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:36,848 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:36,849 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:36,871 INFO    Thread-14 :2129123 [upload_job.py:push():137] Uploaded file /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/wandb-summary.json
+2023-04-28 15:38:36,896 INFO    Thread-12 :2129123 [upload_job.py:push():137] Uploaded file /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/output.log
+2023-04-28 15:38:36,898 INFO    Thread-16 :2129123 [upload_job.py:push():137] Uploaded file /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/conda-environment.yaml
+2023-04-28 15:38:36,930 INFO    Thread-15 :2129123 [upload_job.py:push():137] Uploaded file /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/requirements.txt
+2023-04-28 15:38:36,951 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:36,951 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:36,962 INFO    Thread-13 :2129123 [upload_job.py:push():137] Uploaded file /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/files/config.yaml
+2023-04-28 15:38:37,053 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:37,053 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:37,155 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:37,155 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:37,162 INFO    Thread-6  :2129123 [sender.py:transition_state():392] send defer: 8
+2023-04-28 15:38:37,163 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:37,163 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 8
+2023-04-28 15:38:37,164 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:37,164 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 8
+2023-04-28 15:38:37,258 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:37,635 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 9
+2023-04-28 15:38:37,635 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:37,636 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:37,636 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 9
+2023-04-28 15:38:37,636 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:37,636 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 9
+2023-04-28 15:38:37,637 INFO    SenderThread:2129123 [sender.py:transition_state():392] send defer: 10
+2023-04-28 15:38:37,637 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: defer
+2023-04-28 15:38:37,638 DEBUG   SenderThread:2129123 [sender.py:send():235] send: final
+2023-04-28 15:38:37,638 INFO    HandlerThread:2129123 [handler.py:handle_request_defer():164] handle defer: 10
+2023-04-28 15:38:37,638 DEBUG   SenderThread:2129123 [sender.py:send():235] send: footer
+2023-04-28 15:38:37,639 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: defer
+2023-04-28 15:38:37,639 INFO    SenderThread:2129123 [sender.py:send_request_defer():388] handle sender defer: 10
+2023-04-28 15:38:37,737 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: poll_exit
+2023-04-28 15:38:37,737 DEBUG   SenderThread:2129123 [sender.py:send_request():249] send_request: poll_exit
+2023-04-28 15:38:37,738 INFO    SenderThread:2129123 [file_pusher.py:join():150] waiting for file pusher
+2023-04-28 15:38:38,022 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: sampled_history
+2023-04-28 15:38:38,023 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: get_summary
+2023-04-28 15:38:38,025 DEBUG   HandlerThread:2129123 [handler.py:handle_request():141] handle_request: shutdown
+2023-04-28 15:38:38,025 INFO    HandlerThread:2129123 [handler.py:finish():778] shutting down handler
+2023-04-28 15:38:38,638 INFO    WriterThread:2129123 [datastore.py:close():281] close: /home/dqwang/scratch/tongchen/FTD-distillation/buffer/wandb/run-20230428_153808-3s56j40t/run-3s56j40t.wandb
+2023-04-28 15:38:38,920 INFO    SenderThread:2129123 [sender.py:finish():1078] shutting down sender
+2023-04-28 15:38:38,921 INFO    SenderThread:2129123 [file_pusher.py:finish():145] shutting down file pusher
+2023-04-28 15:38:38,921 INFO    SenderThread:2129123 [file_pusher.py:join():150] waiting for file pusher
+2023-04-28 15:38:38,924 INFO    MainThread:2129123 [internal.py:handle_exit():82] Internal process exited

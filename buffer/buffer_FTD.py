@@ -6,8 +6,10 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 from utils.utils_gsam import get_dataset, get_network, get_daparam,\
-    TensorDataset, epoch, ParamDiffAug
+    TensorDataset, epoch, ParamDiffAug, epoch_mimic
 import copy
+from torch.optim.lr_scheduler import CosineAnnealingLR
+import wandb
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -34,33 +36,33 @@ def main(args):
 
 
     ''' organize the real dataset '''
-    images_all = []
-    labels_all = []
-    indices_class = [[] for c in range(num_classes)]
-    print("BUILDING DATASET")
-    for i in tqdm(range(len(dst_train))):
-        sample = dst_train[i]
-        images_all.append(torch.unsqueeze(sample[0], dim=0))
-        labels_all.append(class_map[torch.tensor(sample[1]).item()])
-    #print('num of training images',len(images_all))
-    len_dst_train = len(images_all)  ##50000
+    # images_all = []
+    # labels_all = []
+    # indices_class = [[] for c in range(num_classes)]
+    # print("BUILDING DATASET")
+    # for i in tqdm(range(len(dst_train))):
+    #     sample = dst_train[i]
+    #     images_all.append(torch.unsqueeze(sample[0], dim=0))
+    #     labels_all.append(class_map[torch.tensor(sample[1]).item()])
+    # #print('num of training images',len(images_all))
+    # len_dst_train = len(images_all)  ##50000
 
-    for i, lab in tqdm(enumerate(labels_all)):
-        indices_class[lab].append(i)
-    images_all = torch.cat(images_all, dim=0).to("cpu")
-    labels_all = torch.tensor(labels_all, dtype=torch.long, device="cpu")
+    # for i, lab in tqdm(enumerate(labels_all)):
+    #     indices_class[lab].append(i)
+    # images_all = torch.cat(images_all, dim=0).to("cpu")
+    # labels_all = torch.tensor(labels_all, dtype=torch.long, device="cpu")
 
-    for c in range(num_classes):
-        print('class c = %d: %d real images'%(c, len(indices_class[c])))
+    # for c in range(num_classes):
+    #     print('class c = %d: %d real images'%(c, len(indices_class[c])))
 
-    for ch in range(channel):
-        print('real images channel %d, mean = %.4f, std = %.4f'%(ch, torch.mean(images_all[:, ch]), torch.std(images_all[:, ch])))
+    # for ch in range(channel):
+    #     print('real images channel %d, mean = %.4f, std = %.4f'%(ch, torch.mean(images_all[:, ch]), torch.std(images_all[:, ch])))
 
     criterion = nn.CrossEntropyLoss().to(args.device)
 
     trajectories = []
 
-    dst_train = TensorDataset(copy.deepcopy(images_all.detach()), copy.deepcopy(labels_all.detach()))
+    # dst_train = TensorDataset(copy.deepcopy(images_all.detach()), copy.deepcopy(labels_all.detach()))
     trainloader = torch.utils.data.DataLoader(dst_train, batch_size=args.batch_train, shuffle=True, num_workers=0)
 
     ''' set augmentation for whole-dataset training '''
@@ -70,8 +72,15 @@ def main(args):
 
     for it in range(0, args.num_experts):
 
+        wandb.init(sync_tensorboard=False,
+                entity='tongchen',
+                project="ftd-buffer-{}-{}-{}-lr={}-l2={}-mom={}-ep{}".format(args.dataset, num_classes, args.model, args.lr_teacher, args.l2, args.mom, args.train_epochs),
+                name='r50-{}-{}'.format(args.dataset, it)
+            #    name='test'
+               )
+
         ''' Train synthetic data '''
-        teacher_net = get_network(args.model, channel, num_classes, im_size).to(args.device) # get a random model
+        teacher_net = get_network(args.model, channel, num_classes, im_size, no_frz=args.no_frz).to(args.device) # get a random model
         teacher_net.train()
         lr = args.lr_teacher
        
@@ -96,14 +105,32 @@ def main(args):
 
         lr_schedule = [args.train_epochs // 2 + 1]
         for e in range(args.train_epochs):
+            wandb.log({"Progress": e}, step=e)
 
-            train_loss, train_acc = epoch("train", dataloader=trainloader, net=teacher_net, optimizer=teacher_optim,
-                                        criterion=criterion, args=args, aug=True,scheduler=scheduler)
+            if args.dataset.startswith('MIMIC'):
+                train_loss, train_bag_class_auc, train_mean = epoch_mimic("train", dataset=dst_train, dataloader=trainloader, net=teacher_net, 
+                                                                        optimizer=teacher_optim, scheduler=scheduler, criterion=criterion, args=args, aug=True)
+                test_loss, test_bag_class_auc, test_mean =  epoch_mimic("train", dataset=dst_test, dataloader=testloader, net=teacher_net, 
+                                                                        optimizer=teacher_optim, scheduler=scheduler, criterion=criterion, args=args, aug=False)                                                     
 
-            test_loss, test_acc = epoch("test", dataloader=testloader, net=teacher_net, optimizer=None,
-                                        criterion=criterion, args=args, aug=False, scheduler=scheduler)
+                wandb.log({'Train Loss': train_loss}, step=e)
+                wandb.log({'Train mean_bag_auc': train_mean}, step=e)
+                
+                wandb.log({'Test Loss': test_loss}, step=e)
+                wandb.log({'Test mean_bag_auc': test_mean}, step=e)
+                for i in range(len(test_bag_class_auc)):
+                    wandb.log({'bag_auc_{}'.format(i): test_bag_class_auc[i]}, step=e)
+                
+                wandb.log({'lr': lr}, step=e)
 
-            print("Itr: {}\tEpoch: {}\tTrain Acc: {}\tTest Acc: {}".format(it, e, train_acc, test_acc))
+            else:
+                train_loss, train_acc = epoch("train", dataloader=trainloader, net=teacher_net, optimizer=teacher_optim,
+                                            criterion=criterion, args=args, aug=True,scheduler=scheduler)
+
+                test_loss, test_acc = epoch("test", dataloader=testloader, net=teacher_net, optimizer=None,
+                                            criterion=criterion, args=args, aug=False, scheduler=scheduler)
+
+                print("Itr: {}\tEpoch: {}\tTrain Acc: {}\tTest Acc: {}".format(it, e, train_acc, test_acc))
 
             timestamps.append([p.detach().cpu() for p in teacher_net.parameters()])
             
@@ -150,6 +177,7 @@ if __name__ == '__main__':
     parser.add_argument("--rho_min", default=2.0, type=float, help="Rho parameter for SAM.")
     parser.add_argument("--alpha", default=0.4, type=float, help="Rho parameter for SAM.")
     parser.add_argument("--adaptive", default=True, type=bool, help="True if you want to use the Adaptive SAM.")
+    parser.add_argument('--no_frz', action='store_true')
 
     args = parser.parse_args()
     main(args)

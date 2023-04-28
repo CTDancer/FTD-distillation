@@ -1,0 +1,27 @@
+The model and loaded state dict do not match exactly
+unexpected key in source state_dict: head.fc.weight, head.fc.bias
+Loading data:   0% 0/32 [00:14<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/buffer_FTD.py", line 183, in <module>
+    main(args)
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/buffer_FTD.py", line 111, in main
+    train_loss, train_bag_class_auc, train_mean = epoch_mimic("train", dataset=dst_train, dataloader=trainloader, net=teacher_net,
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/../utils/utils_gsam.py", line 799, in epoch_mimic
+    output, loss = optimizer.step()
+  File "/home/dqwang/anaconda3/envs/distillation_ct/lib/python3.9/site-packages/torch/optim/optimizer.py", line 88, in wrapper
+    return func(*args, **kwargs)
+  File "/home/dqwang/anaconda3/envs/distillation_ct/lib/python3.9/site-packages/torch/autograd/grad_mode.py", line 27, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/gsam/gsam.py", line 162, in step
+    outputs, loss_value = get_grad()
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/gsam/gsam.py", line 145, in get_grad
+    loss = loss_fn(outputs, targets, **kwargs)
+  File "/home/dqwang/scratch/tongchen/FTD-distillation/buffer/../utils/utils_gsam.py", line 796, in loss_fn
+    return criterion(predictions, targets)
+  File "/home/dqwang/anaconda3/envs/distillation_ct/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/dqwang/anaconda3/envs/distillation_ct/lib/python3.9/site-packages/torch/nn/modules/loss.py", line 1163, in forward
+    return F.cross_entropy(input, target, weight=self.weight,
+  File "/home/dqwang/anaconda3/envs/distillation_ct/lib/python3.9/site-packages/torch/nn/functional.py", line 2996, in cross_entropy
+    return torch._C._nn.cross_entropy_loss(input, target, weight, _Reduction.get_enum(reduction), ignore_index, label_smoothing)
+RuntimeError: 0D or 1D target tensor expected, multi-target not supported

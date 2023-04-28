@@ -8,11 +8,231 @@ import torch.nn as nn
 import torch.nn.functional as F
 import os
 import kornia as K
-import tqdm
+from tqdm import tqdm
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 from scipy.ndimage.interpolation import rotate as scipyrotate
 from networks import MLP, ConvNet, LeNet, AlexNet, VGG11BN, VGG11, ResNet18, ResNet18BN_AP, ResNet18_AP
+
+from PIL import Image
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from sklearn.metrics import roc_auc_score, f1_score
+from mmcv.cnn.resnet import ResNet
+from collections import defaultdict
+import os.path as osp
+import random
+import wandb
+import copy
+import pdb
+
+
+class CRCK(Dataset):
+    """USPS Dataset.
+    Args:
+        root (string): Root directory of dataset where dataset file exist.
+        train (bool, optional): If True, use the training split.
+        download (bool, optional): If true, downloads the dataset
+            from the internet and puts it in root directory.
+            If dataset is already downloaded, it is not downloaded again.
+        transform (callable, optional): A function/transform that takes in
+            an PIL image and returns a transformed version.
+            E.g, ``transforms.RandomCrop``
+    """
+
+    # url = "https://github.com/mingyuliutw/CoGAN/raw/master/cogan_pytorch/data/uspssample/usps_28x28.pkl"
+
+    def __init__(self, root, ann_file, cls_ind, train=True, transform=None):
+        """Init CRCK dataset."""
+
+        self.train = train
+        self.ann_file = ann_file
+        self.transform = transform
+        self.dataset_size = None
+        self.ann_list = self.list_from_file(self.ann_file,root)
+        self.cls_ind = cls_ind
+
+
+    def __getitem__(self, index):
+        """Get images and target for data loader.
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+        img_path = self.ann_list[index].split(' ')[0]
+        label = self.ann_list[index].split(' ')[1].split(',')[self.cls_ind]
+        img = Image.open(img_path).convert('RGB')
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        label = np.int64(label).item()
+        bagname = self.ann_list[index].split(' ')[0][-27:-15]
+        if self.train:
+            # return img, label
+            return img, label, bagname
+        else:
+            # return img, label
+            return img, label, bagname
+
+    def __len__(self):
+        """Return size of dataset."""
+        return len(self.ann_list)
+
+    def list_from_file(self,ann,pre):
+        """Load a text file and parse the content as a list of strings."""
+        print(ann)
+        item_list = []
+        with open(ann,'r') as f:
+            for line in f:
+                item_list.append(pre+'/'+line.rstrip('\n\r'))
+        return item_list
+
+class MIMIC(Dataset):
+    def __init__(self, root, ann_file, train=True, transform=None):
+        """Init MIMIC dataset."""
+        self.train = train
+        self.data_prefix = root
+        self.ann_file = ann_file
+        self.transform = transform
+        self.dataset_size = None
+        self.subject_infos = {}
+        self.data_infos = self.load_annotations()
+        self.CLASSES = [str(i) for i in range(14)]
+
+    def __getitem__(self, index):
+        img = Image.open(self.data_infos[index]['image_path']).convert('RGB')
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        gt_label = self.data_infos[index]['gt_label']
+        bagname = self.data_infos[index]['bag']
+
+        if self.train:
+            # return img, label
+            # print(gt_label)
+            return img, gt_label, bagname
+        else:
+            # return img, label
+            return img, gt_label, bagname
+
+    def __len__(self):
+        """Return size of dataset."""
+        return len(self.data_infos)
+
+    def load_annotations(self):
+        """
+        Load a text file and parse the content as a list of strings.
+        Each string is composed of : path + bagname + label.
+        """
+        data_infos = []
+        with open(self.ann_file,'r') as f:
+            for line in f:
+                filename, class_name = line.strip().split(' ')
+                subject_id, study_id, filename = filename.split('_')
+                img_path = os.path.join(self.data_prefix, filename)
+                bagname = f'{subject_id}_{study_id}'
+                gt_label = [int(label) for label in class_name]  # class_to_idx
+                info = {
+                    'image_path': img_path,
+                    'bag': bagname,
+                    'gt_label': gt_label,
+                    'subject_id': subject_id,
+                    'study_id': study_id
+                }
+                data_infos.append(info)
+
+        for i, info in enumerate(data_infos):
+            self.subject_infos[info['bag']] = self.subject_infos.get(info['bag'], []) + [i] 
+        return data_infos
+
+
+class GlobalAveragePooling(nn.Module):
+    """Global Average Pooling neck.
+
+    Note that we use `view` to remove extra channel after pooling. We do not
+    use `squeeze` as it will also remove the batch dimension when the tensor
+    has a batch dimension of size 1, which can lead to unexpected errors.
+
+    Args:
+        dim (int): Dimensions of each sample channel, can be one of {1, 2, 3}.
+            Default: 2
+    """
+
+    def __init__(self, dim=2):
+        super(GlobalAveragePooling, self).__init__()
+        assert dim in [1, 2, 3], 'GlobalAveragePooling dim only support ' \
+            f'{1, 2, 3}, get {dim} instead.'
+        if dim == 1:
+            self.gap = nn.AdaptiveAvgPool1d(1)
+        elif dim == 2:
+            self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        else:
+            self.gap = nn.AdaptiveAvgPool3d((1, 1, 1))
+
+    def init_weights(self):
+        pass
+
+    def forward(self, inputs):
+        if isinstance(inputs, tuple):
+            outs = tuple([self.gap(x) for x in inputs])
+            outs = tuple(
+                [out.view(x.size(0), -1) for out, x in zip(outs, inputs)])
+        elif isinstance(inputs, torch.Tensor):
+            outs = self.gap(inputs)
+            outs = outs.view(inputs.size(0), -1)
+        else:
+            raise TypeError('neck inputs should be tuple or torch.tensor')
+        return outs
+
+class MyResNet18(nn.Module):
+    def __init__(self, ck_path=None, num_classes=2, no_frz=False):
+        super(MyResNet18, self).__init__()
+        if no_frz:
+            self.resnet = ResNet(depth=18, out_indices=(3, ))
+        else:
+            self.resnet = ResNet(depth=18, out_indices=(3, ), frozen_stages=3)
+        if ck_path is not None:
+            self.resnet.init_weights(ck_path)
+        self.classifier = nn.Linear(512, num_classes, bias=True)
+        self.pool = GlobalAveragePooling()
+        self.dropout = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        # 3*224*224
+        out = self.resnet(x) # 64/128/256/512*7*7
+        # out = F.avg_pool2d(out, kernel_size=7) # 512*1
+        out = self.pool(out)
+        out = out.view(out.size(0), -1)
+        out = self.dropout(out)
+        out = self.classifier(out)
+        out = F.softmax(out, dim=-1)
+        return out
+
+class MyResNet50(nn.Module):
+    def __init__(self, ck_path=None, num_classes=2, no_frz=False):
+        super(MyResNet50, self).__init__()
+        if no_frz:
+            self.resnet = ResNet(depth=50, out_indices=(3, ))
+        else:
+            self.resnet = ResNet(depth=50, out_indices=(3, ), frozen_stages=3)
+        if ck_path is not None:
+            self.resnet.init_weights(ck_path)
+        self.classifier = nn.Linear(2048, num_classes, bias=True)
+        self.pool = GlobalAveragePooling()
+        self.dropout = nn.Dropout(p=0.5)
+
+    def forward(self, x):
+        # 3*224*224
+        out = self.resnet(x) # 64/128/256/512*7*7
+        # out = F.avg_pool2d(out, kernel_size=7) # 512*1
+        out = self.pool(out)
+        out = out.view(out.size(0), -1)
+        out = self.dropout(out)
+        out = self.classifier(out)
+        out = F.softmax(out, dim=-1)
+        return out
 
 class Config:
     imagenette = [0, 217, 482, 491, 497, 566, 569, 571, 574, 701]
@@ -131,36 +351,169 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
         class_names = dst_train.classes
         class_map = {x: x for x in range(num_classes)}
 
+    elif dataset.startswith('CRC'):
+        channel = 3
+        im_size = (224, 224)
+        num_classes = 2
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+
+        if args.zca:
+            transform = transforms.Compose([transforms.ToTensor()])
+        else:
+            transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=mean, std=std)])
+        
+        task = int(dataset[3])-1
+        class_names = ['MSI', 'MSS']
+        CRC_train = '/shared/dqwang/datasets/CRC/CRC_DX_train'
+        CRC_test = '/shared/dqwang/datasets/CRC/CRC_DX_test'
+        # train_ann_path = '/shared/dqwang/datasets/CRC/annotation/train_ann.txt'
+        if args.client >= 0:
+            train_ann_path = '/shared/dqwang/datasets/CRC/annotation/federate/split_5_1/train_' + str(args.client) + '.txt'
+        else:
+            train_ann_path = '/shared/dqwang/datasets/CRC/annotation/patch_split/msi/train_50.txt'
+        test_ann_path = '/shared/dqwang/datasets/CRC/annotation/test_ann.txt'
+        dst_train = CRCK(CRC_train, train_ann_path, cls_ind=task, train=True, transform=transform) # no augmentation
+        dst_test = CRCK(CRC_test, test_ann_path, cls_ind=task, train=False, transform=transform)
+        # class_names = dst_train.classes
+        class_map = {x: x for x in range(num_classes)}
+
+    elif dataset=='MIMIC':
+        channel = 3
+        im_size = (224, 224)
+        num_classes = 14
+        mean=[0.485, 0.456, 0.406]
+        std=[0.229, 0.224, 0.225]
+
+        if args.zca:
+            train_transform = transforms.Compose([transforms.ToTensor()])
+            test_transform = train_transform
+        else:
+            train_transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(15),
+                transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225])
+            ])
+            test_transform = transforms.Compose([
+                transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225])
+            ])
+
+        class_names = [str(i) for i in range(14)]
+        MIMIC_train = '/shared/dqwang/scratch/tongchen/MIMIC/train'
+        MIMIC_test = '/shared/dqwang/scratch/tongchen/MIMIC/test'
+        train_ann_path = '/shared/dqwang/scratch/yunkunzhang/mimic_multi-label_ann/train.txt'
+        test_ann_path = '/shared/dqwang/scratch/yunkunzhang/mimic_multi-label_ann/test.txt'
+        dst_train = MIMIC(MIMIC_train, train_ann_path, train=True, transform=train_transform)
+        dst_test = MIMIC(MIMIC_test, test_ann_path, train=False, transform=test_transform)
+        # class_names = dst_train.classes
+        class_map = {x: x for x in range(num_classes)}
+
+    elif dataset=='MIMIC_small':
+        channel = 3
+        im_size = (224, 224)
+        num_classes = 14
+        mean=[0.485, 0.456, 0.406]
+        std=[0.229, 0.224, 0.225]
+
+        if args.zca:
+            train_transform = transforms.Compose([transforms.ToTensor()])
+            test_transform = train_transform
+        else:
+            train_transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(15),
+                transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225])
+            ])
+            test_transform = transforms.Compose([
+                transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225])
+            ])
+
+        class_names = [str(i) for i in range(14)]
+        MIMIC_train = '/shared/dqwang/scratch/tongchen/MIMIC_small/train'
+        MIMIC_test = '/shared/dqwang/scratch/tongchen/MIMIC_small/test'
+        train_ann_path = '/shared/dqwang/scratch/tongchen/MIMIC_small/annotation/train_ann.txt'
+        test_ann_path = '/shared/dqwang/scratch/tongchen/MIMIC_small/annotation/test_ann.txt'
+        dst_train = MIMIC(MIMIC_train, train_ann_path, train=True, transform=train_transform)
+        dst_test = MIMIC(MIMIC_test, test_ann_path, train=False, transform=test_transform)
+        # class_names = dst_train.classes
+        class_map = {x: x for x in range(num_classes)}
+    
     else:
         exit('unknown dataset: %s'%dataset)
 
     if args.zca:
-        images = []
-        labels = []
-        print("Train ZCA")
-        for i in tqdm.tqdm(range(len(dst_train))):
-            im, lab = dst_train[i]
-            images.append(im)
-            labels.append(lab)
-        images = torch.stack(images, dim=0).to(args.device)
-        labels = torch.tensor(labels, dtype=torch.long, device="cpu")
-        zca = K.enhance.ZCAWhitening(eps=0.1, compute_inv=True)
-        zca.fit(images)
-        zca_images = zca(images).to("cpu")
-        dst_train = TensorDataset(zca_images, labels)
+        if args.dataset.startswith('CRC') or args.dataset.startswith('MIMIC'):
+            images = []
+            labels = []
+            bagnames = []
+            print("Train ZCA")
+            for i in tqdm(range(len(dst_train))):
+                im, lab, bagname = dst_train[i]
+                images.append(im)
+                labels.append(lab)
+                bagnames.append(bagname)
+            images = torch.stack(images, dim=0).to(args.device)
+            labels = torch.tensor(labels, dtype=torch.long, device="cpu")
+            # pdb.set_trace()
+            # bagnames = torch.tensor(bagnames)
+            zca = K.enhance.ZCAWhitening(eps=0.1, compute_inv=True)
+            zca.fit(images)
+            zca_images = zca(images).to("cpu")
+            dst_train = BagDataset(zca_images, labels, bagnames)
 
-        images = []
-        labels = []
-        print("Test ZCA")
-        for i in tqdm.tqdm(range(len(dst_test))):
-            im, lab = dst_test[i]
-            images.append(im)
-            labels.append(lab)
-        images = torch.stack(images, dim=0).to(args.device)
-        labels = torch.tensor(labels, dtype=torch.long, device="cpu")
+            images = []
+            labels = []
+            bagnames = []
+            print("Test ZCA")
+            for i in tqdm.tqdm(range(len(dst_test))):
+                im, lab, bagname = dst_test[i]
+                images.append(im)
+                labels.append(lab)
+                bagnames.append(bagname)
+            images = torch.stack(images, dim=0).to(args.device)
+            labels = torch.tensor(labels, dtype=torch.long, device="cpu")
+            # bagnames = torch.tensor(bagnames)
+            zca_images = zca(images).to("cpu")
+            dst_test = BagDataset(zca_images, labels, bagnames)
+        else:
+            images = []
+            labels = []
+            print("Train ZCA")
+            for i in tqdm(range(len(dst_train))):
+                im, lab = dst_train[i]
+                images.append(im)
+                labels.append(lab)
+            images = torch.stack(images, dim=0).to(args.device)
+            labels = torch.tensor(labels, dtype=torch.long, device="cpu")
+            zca = K.enhance.ZCAWhitening(eps=0.1, compute_inv=True)
+            zca.fit(images)
+            zca_images = zca(images).to("cpu")
+            dst_train = TensorDataset(zca_images, labels)
 
-        zca_images = zca(images).to("cpu")
-        dst_test = TensorDataset(zca_images, labels)
+            images = []
+            labels = []
+            print("Test ZCA")
+            for i in tqdm.tqdm(range(len(dst_test))):
+                im, lab = dst_test[i]
+                images.append(im)
+                labels.append(lab)
+            images = torch.stack(images, dim=0).to(args.device)
+            labels = torch.tensor(labels, dtype=torch.long, device="cpu")
+
+            zca_images = zca(images).to("cpu")
+            dst_test = TensorDataset(zca_images, labels)
 
         args.zca_trans = zca
 
@@ -183,7 +536,17 @@ class TensorDataset(Dataset):
     def __len__(self):
         return self.images.shape[0]
 
+class BagDataset(Dataset):
+    def __init__(self, images, labels, bagnames): # images: n x c x h x w tensor
+        self.images = images.detach().float()
+        self.labels = labels.detach()
+        # self.bagnames = bagnames.detach()
 
+    def __getitem__(self, index):
+        return self.images[index], self.labels[index], self.bagnames[index]
+
+    def __len__(self):
+        return self.images.shape[0]
 
 def get_default_convnet_setting():
     net_width, net_depth, net_act, net_norm, net_pooling = 128, 3, 'relu', 'instancenorm', 'avgpooling'
@@ -191,7 +554,7 @@ def get_default_convnet_setting():
 
 
 
-def get_network(model, channel, num_classes, im_size=(32, 32), dist=True):
+def get_network(model, channel, num_classes, im_size=(32, 32), dist=True, no_frz=False):
     torch.random.manual_seed(int(time.time() * 1000) % 100000)
     net_width, net_depth, net_act, net_norm, net_pooling = get_default_convnet_setting()
 
@@ -208,7 +571,13 @@ def get_network(model, channel, num_classes, im_size=(32, 32), dist=True):
     elif model == 'VGG11BN':
         net = VGG11BN(channel=channel, num_classes=num_classes)
     elif model == 'ResNet18':
-        net = ResNet18(channel=channel, num_classes=num_classes)
+        # net = ResNet18(channel=channel, num_classes=num_classes)
+        net = MyResNet18(ck_path='/shared/dqwang/scratch/lfzhou/r18_imgpre.pth', num_classes=num_classes, no_frz=no_frz)
+    elif model == 'ResNet34':
+        net = ResNet34(channel=channel, num_classes=num_classes)
+    elif model == 'ResNet50':
+        # net = ResNet50(channel=channel, num_classes=num_classes)
+        net = MyResNet50(ck_path='/shared/dqwang/scratch/tongchen/r50_imgpre.pth', num_classes=num_classes, no_frz=no_frz)
     elif model == 'ResNet18BN_AP':
         net = ResNet18BN_AP(channel=channel, num_classes=num_classes)
     elif model == 'ResNet18_AP':
@@ -375,7 +744,106 @@ def epoch(mode, dataloader, net, optimizer, criterion, args, aug,scheduler, text
 
     return loss_avg, acc_avg
 
+def epoch_mimic(mode, dataset, dataloader, net, optimizer, criterion, scheduler, args, aug, texture=False):
+    """ epoch() for MIMIC dataset """
+    loss_avg, num_exp = 0, 0
+    net = net.to(args.device)
+    
+    # I added dropout for MyResNet
+    if mode == 'train':
+        net.train()
+    else:
+        net.eval()
 
+    if mode == 'test' or mode == 'train':
+        data_infos = dataset.data_infos
+        subject_infos = dataset.subject_infos
+
+        gt_labels = np.array([data['gt_label'] for data in data_infos])
+
+    results = {}
+
+    # if mode=='eval_train':
+    #     pdb.set_trace()
+    
+    start = time.time()
+    for i_batch, datum in tqdm(enumerate(dataloader), total=len(dataloader), desc="Loading data", position=0):
+        # pdb.set_trace()
+        img = datum[0].float().to(args.device)
+        if mode == 'test' or mode == 'train':
+            lab = torch.stack(datum[1]).transpose(0,1).float().to(args.device)
+            bagnames = datum[2]
+        else:
+            lab = datum[1].float().to(args.device)
+
+        # pdb.set_trace()
+
+        if aug:
+            if args.dsa:
+                img = DiffAugment(img, args.dsa_strategy, param=args.dsa_param)
+            else:
+                img = augment(img, args.dc_aug_param, device=args.device)
+
+        n_b = lab.shape[0]
+
+        ##GSAM
+        if mode == 'train':
+            def loss_fn(predictions, targets):
+                #return smooth_crossentropy(predictions, targets,smoothing=args.label_smoothing).mean()
+                return criterion(predictions, targets)
+
+            optimizer.set_closure(loss_fn, img, lab)
+            output, loss = optimizer.step()
+            #print(loss)
+            for i in range(len(bagnames)):
+                results[bagnames[i]] = results.get(bagnames[i], []) + [output[i].tolist()]
+
+            with torch.no_grad():
+                loss_avg += loss.item()*n_b
+                num_exp += n_b
+
+                scheduler.step()
+                optimizer.update_rho_t()
+        else:
+            with torch.no_grad():
+                output = net(img)
+                #loss = smooth_crossentropy(output, lab)
+                loss = criterion(output, lab)
+
+                if mode == 'test':
+                    for i in range(len(bagnames)):
+                        results[bagnames[i]] = results.get(bagnames[i], []) + [output[i].tolist()]
+
+                loss_avg += loss.item()*n_b
+                num_exp += n_b
+    
+    # dataset_time = time.time() - start
+    # print("Time for enumerating the whole dataset: {}".format(dataset_time))
+    
+    loss_avg /= num_exp
+
+    # pdb.set_trace()
+    if mode == 'test' or mode == 'train':
+        for bag in list(results.keys()):
+            results[bag] = np.array(results[bag])
+        
+        # pdb.set_trace()
+        # start = time.time()
+        # num_imgs = len(results)
+        threshold = 0.5
+        bags = list(subject_infos.keys())
+        bag_gt_labels = np.array([gt_labels[subject_infos[b][0]] for b in bags])    # bag_gt_labels.shape = (999, 14)
+        bag_results = np.array([np.mean(results[b], axis=0) for b in bags])
+        bag_class_auc = []
+        for i in range(len(dataset.CLASSES)):
+            auc = roc_auc_score(bag_gt_labels[:, i], bag_results[:, i])
+            bag_class_auc.append(auc)
+        mean_bag_class_auc = roc_auc_score(bag_gt_labels, bag_results, average='micro')
+        # time_cal = time.time() - start
+        # print("Caculate bag_class_auc time: {}".format(time_cal))
+        return loss_avg, bag_class_auc, mean_bag_class_auc
+    else:
+        return loss_avg
 
 def evaluate_synset(it_eval, net, images_train, labels_train, testloader, args, return_loss=False, texture=False):
     net = net.to(args.device)
@@ -390,31 +858,53 @@ def evaluate_synset(it_eval, net, images_train, labels_train, testloader, args, 
 
     dst_train = TensorDataset(images_train, labels_train)
     trainloader = torch.utils.data.DataLoader(dst_train, batch_size=args.batch_train, shuffle=True, num_workers=0)
+    scheduler = CosineAnnealingLR(optimizer, T_max=len(dst_train), eta_min=0)
 
     start = time.time()
     acc_train_list = []
     loss_train_list = []
 
-    for ep in tqdm.tqdm(range(Epoch+1)):
-        loss_train, acc_train = epoch('train', trainloader, net, optimizer, criterion, args, aug=True, texture=texture)
-        acc_train_list.append(acc_train)
-        loss_train_list.append(loss_train)
-        if ep == Epoch:
-            with torch.no_grad():
-                loss_test, acc_test = epoch('test', testloader, net, optimizer, criterion, args, aug=False)
-        if ep in lr_schedule:
-            lr *= 0.1
-            optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
+    if args.dataset.startswith('MIMIC'):
+        for ep in tqdm(range(Epoch+1)):
+            loss_train = epoch_mimic('eval_train', dst_train, trainloader, net, optimizer, criterion, scheduler, args, aug=False, texture=texture)
+            loss_train_list.append(loss_train)
+
+            if ep == Epoch:
+                with torch.no_grad():
+                    loss_test, _, auc_test = epoch_mimic('test', test_dataset, testloader, net, optimizer, criterion, scheduler, args, aug=False)
+
+            if ep in lr_schedule:
+                lr *= 0.1
+                optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
+
+    else:
+        for ep in tqdm(range(Epoch+1)):
+            loss_train, acc_train = epoch('eval_train', trainloader, net, optimizer, criterion, args, aug=False, texture=texture)
+            acc_train_list.append(acc_train)
+            loss_train_list.append(loss_train)
+
+            if ep == Epoch:
+                with torch.no_grad():
+                    loss_test, acc_test, auc_test = epoch('test', testloader, net, optimizer, criterion, args, aug=False)
+
+            if ep in lr_schedule:
+                lr *= 0.1
+                optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
 
 
     time_train = time.time() - start
-
-    print('%s Evaluate_%02d: epoch = %04d train time = %d s train loss = %.6f train acc = %.4f, test acc = %.4f' % (get_time(), it_eval, Epoch, int(time_train), loss_train, acc_train, acc_test))
-
-    if return_loss:
-        return net, acc_train_list, acc_test, loss_train_list, loss_test
+    if args.dataset.startswith('MIMIC'):
+        print('%s Evaluate_%02d: epoch = %04d train time = %d s train loss = %.6f test auc = %.4f' % (get_time(), it_eval, Epoch, int(time_train), loss_train, auc_test))
+        if return_loss:
+            return net, auc_test, loss_train_list, loss_test
+        else:
+            return net, auc_test
     else:
-        return net, acc_train_list, acc_test
+        print('%s Evaluate_%02d: epoch = %04d train time = %d s train loss = %.6f train acc = %.4f, test acc = %.4f, test auc = %.4f' % (get_time(), it_eval, Epoch, int(time_train), loss_train, acc_train, acc_test, auc_test))
+        if return_loss:
+            return net, acc_train_list, acc_test, loss_train_list, loss_test, auc_test
+        else:
+            return net, acc_train_list, acc_test, auc_test
 
 
 def augment(images, dc_aug_param, device):
